@@ -101,30 +101,40 @@ def DespecklePatch(img, Despeckle_White_Size=5, Despeckle_Black_Size=10):
     Black_Counter=0
 
     nlabels, labels, stats, centroids = cv.connectedComponentsWithStats(img, None, None, None, 4)
+    area   = stats[ : , cv.CC_STAT_AREA]
+    left   = stats[ : , cv.CC_STAT_LEFT]
+    top    = stats[ : , cv.CC_STAT_TOP]
+    width  = stats[ : , cv.CC_STAT_WIDTH]
+    height = stats[ : , cv.CC_STAT_HEIGHT]
 
-    areas = stats[1:,cv.CC_STAT_AREA]
-    result = np.zeros((labels.shape), np.uint8)
+    for j in range(1 , nlabels):
+        if area[j] <= Despeckle_White_Size:
+            White_Counter += 1
+            for x in range(left[j], left[j] + width[j]):
+                for y in range(top[j], top[j] + height[j]):
+                    if labels[y, x] == j:
+                        img[y, x] = 0
+    
+    img = 255 - img
 
-    for j in range(0, nlabels - 1):
-        if areas[j] > Despeckle_White_Size:
-            result[labels == j + 1] = 255
-        else:
-            White_Counter+=1
-
-    #Now invert color and despeckle black
-    img=255-result
     nlabels, labels, stats, centroids = cv.connectedComponentsWithStats(img, None, None, None, 4)
-    areas = stats[1:,cv.CC_STAT_AREA]
-    result = np.zeros((labels.shape), np.uint8)
+    area   = stats[ : , cv.CC_STAT_AREA]
+    left   = stats[ : , cv.CC_STAT_LEFT]
+    top    = stats[ : , cv.CC_STAT_TOP]
+    width  = stats[ : , cv.CC_STAT_WIDTH]
+    height = stats[ : , cv.CC_STAT_HEIGHT]
 
-    for j in range(0, nlabels - 1):
-        if areas[j] > Despeckle_Black_Size:
-            result[labels == j + 1] = 255
-        else:
-            Black_Counter+=1
+    for j in range(1 , nlabels):
+        if area[j] <= Despeckle_Black_Size:
+            Black_Counter += 1
+            for x in range(left[j], left[j] + width[j]):
+                for y in range(top[j], top[j] + height[j]):
+                    if labels[y, x] == j:
+                        img[y, x] = 0
+    
+    img = 255 - img
 
-    #Invert color back to original
-    return(255-result,White_Counter, Black_Counter)
+    return (img, White_Counter, Black_Counter)
     #End Despeckle
 
 
